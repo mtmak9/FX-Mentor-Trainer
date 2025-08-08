@@ -71,7 +71,7 @@ The project is fully containerized with Docker, making it easy to run on any mac
 
 ## Roadmap
 
-A detailed project development plan, divided into phases and key tasks, is available in our [**project Wiki**](https://github.com/YOUR_USERNAME/FX-Mentor-Trainer/wiki).
+A detailed project development plan, divided into phases and key tasks, is available in our [**project Wiki**](https://github.com/mtmak9/FX-Mentor-Trainer/wiki).
 
 ---
 
