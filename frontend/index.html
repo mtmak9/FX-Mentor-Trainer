@@ -2,37 +2,12 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Forex Mentor</title>
-    <!--
-      Ładowanie Tailwind CSS przez CDN.
-      To jest niezbędne, aby style (np. "bg-gray-900", "flex") działały poprawnie,
-      ponieważ komponenty React używają klas Tailwind.
-    -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      /* Dodajemy prosty styl, aby zapewnić, że tło będzie ciemne od samego początku */
-      body {
-        background-color: #111827; /* To jest kolor gray-900 z Tailwind */
-      }
-    </style>
   </head>
   <body>
-    <noscript>Musisz włączyć JavaScript, aby uruchomić tę aplikację.</noscript>
-    
-    <!--
-      To jest kluczowy element.
-      React "chwyta" ten div i renderuje w nim całą aplikację,
-      czyli wszystko, co znajduje się w komponencie App.js.
-      Działa on jak "scena" dla Twojej aplikacji.
-    -->
     <div id="root"></div>
-
-    <!--
-      W prawdziwym projekcie React, narzędzie do budowania (np. Vite, Create React App)
-      automatycznie wstawi tutaj link do skompilowanego pliku JavaScript Twojej aplikacji.
-      Dla celów demonstracyjnych, ten tag jest tutaj jako przykład.
-    -->
-    <!-- <script type="module" src="/src/main.jsx"></script> -->
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

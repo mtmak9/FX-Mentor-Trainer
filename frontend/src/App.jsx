@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-// Usunięto bezpośredni import, który powodował błąd kompilacji.
-// Biblioteka będzie ładowana dynamicznie za pomocą tagu <script>.
+import { createChart } from 'lightweight-charts';
 
 // --- Ikony SVG dla nowoczesnego wyglądu ---
 const HomeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
@@ -13,7 +12,7 @@ const AiIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 
 // --- Komponenty UI ---
 
 const Sidebar = () => (
-  <aside className="w-20 lg:w-64 bg-gray-900 text-gray-300 flex flex-col items-center lg:items-start p-4 space-y-6">
+  <aside className="w-20 lg:w-64 bg-gray-900 text-gray-300 flex flex-col items-center lg:items-start p-4 space-y-6 shrink-0">
     <div className="text-white text-2xl font-bold flex items-center w-full justify-center lg:justify-start">
       <span className="text-3xl text-cyan-400">A</span>
       <span className="hidden lg:inline ml-2">AIMentor</span>
@@ -23,15 +22,15 @@ const Sidebar = () => (
         <HomeIcon />
         <span className="hidden lg:inline ml-4">Dashboard</span>
       </a>
-      <a href="#" className="flex items-center p-3 rounded-lg hover:bg-gray-700">
+      <a href="#" className="flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors">
         <ChartIcon />
         <span className="hidden lg:inline ml-4">Analizy</span>
       </a>
-      <a href="#" className="flex items-center p-3 rounded-lg hover:bg-gray-700">
+      <a href="#" className="flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors">
         <WalletIcon />
         <span className="hidden lg:inline ml-4">Portfel</span>
       </a>
-      <a href="#" className="flex items-center p-3 rounded-lg hover:bg-gray-700">
+      <a href="#" className="flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors">
         <SettingsIcon />
         <span className="hidden lg:inline ml-4">Ustawienia</span>
       </a>
@@ -63,147 +62,95 @@ const Header = () => (
   </header>
 );
 
-const TradingChart = () => {
+const TradingChart = ({ onNewTick }) => {
   const chartContainerRef = useRef();
-  const chartRef = useRef();
   const [currentPair, setCurrentPair] = useState('EUR/USD');
   const [currentPrice, setCurrentPrice] = useState(1.0855);
-  // Dodajemy stan do śledzenia, czy skrypt został załadowany
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const candleSeriesRef = useRef(null);
 
-  // Ten useEffect odpowiada za dynamiczne dodanie skryptu biblioteki do strony
   useEffect(() => {
-    // Sprawdzamy, czy skrypt już istnieje, aby go nie duplikować
-    if (window.LightweightCharts) {
-        setIsScriptLoaded(true);
-        return;
-    }
-    const script = document.createElement('script');
-    script.id = 'lightweight-charts-script';
-    script.src = 'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.esm.js';
-    script.async = true;
-    script.onload = () => {
-      setIsScriptLoaded(true);
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      // Sprzątanie po odmontowaniu komponentu
-      const existingScript = document.getElementById('lightweight-charts-script');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-    };
-  }, []); // Pusta tablica zależności sprawia, że ten efekt uruchomi się tylko raz
-
-  // Ten useEffect tworzy wykres, ale dopiero PO załadowaniu skryptu
-  useEffect(() => {
-    // Czekamy, aż skrypt będzie gotowy i kontener wykresu będzie dostępny
-    if (!isScriptLoaded || !chartContainerRef.current) {
-      return;
-    }
-    
-    // Używamy obiektu z 'window', a nie z importu
-    const { createChart } = window.LightweightCharts;
-
-    chartRef.current = createChart(chartContainerRef.current, {
-      width: chartContainerRef.current.clientWidth,
-      height: 400,
+    const chart = createChart(chartContainerRef.current, {
       layout: {
-        backgroundColor: '#1f2937',
+        background: { color: '#1f2937' },
         textColor: 'rgba(255, 255, 255, 0.9)',
       },
       grid: {
         vertLines: { color: '#2a3546' },
         horzLines: { color: '#2a3546' },
       },
-      crosshair: {
-        mode: 'normal',
-      },
-      rightPriceScale: {
-        borderColor: '#4b5563',
-      },
-      timeScale: {
-        borderColor: '#4b5563',
-      },
+      crosshair: { mode: 'normal' },
+      rightPriceScale: { borderColor: '#4b5563' },
+      timeScale: { borderColor: '#4b5563' },
     });
 
-    const candleSeries = chartRef.current.addCandlestickSeries({
-      upColor: '#22c55e',
-      downColor: '#ef4444',
-      borderDownColor: '#ef4444',
-      borderUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
-      wickUpColor: '#22c55e',
+    candleSeriesRef.current = chart.addCandlestickSeries({
+      upColor: '#22c55e', downColor: '#ef4444',
+      borderDownColor: '#ef4444', borderUpColor: '#22c55e',
+      wickDownColor: '#ef4444', wickUpColor: '#22c55e',
     });
 
-    // Symulacja danych historycznych
-    const initialData = Array.from({ length: 100 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (100 - i));
-        const open = 1.07 + Math.random() * 0.02;
-        const close = open + (Math.random() - 0.5) * 0.005;
-        const high = Math.max(open, close) + Math.random() * 0.003;
-        const low = Math.min(open, close) - Math.random() * 0.003;
-        return { time: date.toISOString().split('T')[0], open, high, low, close };
+    // Generowanie danych historycznych
+    let lastClose = 1.0855;
+    const initialData = Array.from({ length: 100 }, (_, i) => { // Dodano 'i' jako indeks
+        const open = lastClose;
+        const close = open + (Math.random() - 0.5) * 0.001;
+        const high = Math.max(open, close) + Math.random() * 0.0005;
+        const low = Math.min(open, close) - Math.random() * 0.0005;
+        lastClose = close;
+        const time = new Date();
+        // POPRAWKA: Używamy indeksu 'i' zamiast 'initialData.length'
+        time.setMinutes(time.getMinutes() - 100 + i);
+        return { time: time.getTime() / 1000, open, high, low, close };
     });
-    candleSeries.setData(initialData);
-    
-    // Symulacja aktualizacji w czasie rzeczywistym
+    candleSeriesRef.current.setData(initialData);
+
+    // Symulacja ticków w czasie rzeczywistym
     const interval = setInterval(() => {
-        const lastData = initialData[initialData.length - 1];
-        const newPrice = lastData.close + (Math.random() - 0.5) * 0.0005;
-        const newData = {
-            time: new Date().toISOString().split('T')[0],
-            open: lastData.close,
-            high: Math.max(lastData.close, newPrice) + Math.random() * 0.0002,
-            low: Math.min(lastData.close, newPrice) - Math.random() * 0.0002,
-            close: newPrice
-        };
-        candleSeries.update(newData);
-        setCurrentPrice(newPrice);
-        initialData.push(newData);
-        if (initialData.length > 200) initialData.shift();
+        // Ta część kodu pozostaje bez zmian, ale teraz 'initialData' jest poprawnie zainicjalizowane
+        const lastDataPoint = initialData[initialData.length - 1];
+        const open = lastDataPoint.close;
+        const close = open + (Math.random() - 0.5) * 0.0002;
+        const high = Math.max(open, close) + Math.random() * 0.0001;
+        const low = Math.min(open, close) - Math.random() * 0.0001;
+        const newTick = { time: new Date().getTime() / 1000, open, high, low, close };
+        
+        candleSeriesRef.current.update(newTick);
+        initialData.push(newTick);
+        setCurrentPrice(newTick.close);
+        onNewTick(newTick); // Przekazanie nowego ticku do rodzica (App)
     }, 2000);
 
-    const handleResize = () => {
-      if (chartRef.current) {
-        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
-      }
-    };
-
+    const handleResize = () => chart.applyOptions({ width: chartContainerRef.current.clientWidth });
     window.addEventListener('resize', handleResize);
 
-    // Funkcja sprzątająca
     return () => {
       clearInterval(interval);
       window.removeEventListener('resize', handleResize);
-      if (chartRef.current) {
-        chartRef.current.remove();
-      }
+      chart.remove();
     };
-  }, [isScriptLoaded]); // Uruchom ten efekt ponownie, gdy skrypt się załaduje
+  }, [onNewTick]);
 
   return (
     <div className="bg-gray-800 p-4 rounded-lg">
-        <div className="flex justify-between items-center mb-4">
-            <div>
-                <h2 className="text-xl font-bold text-white">{currentPair}</h2>
-                <p className={`text-lg font-semibold ${currentPrice > 1.0855 ? 'text-green-400' : 'text-red-400'}`}>{currentPrice.toFixed(5)}</p>
-            </div>
-            <div className="flex space-x-2">
-                <button className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md">1H</button>
-                <button className="px-3 py-1 text-sm bg-cyan-500 text-white rounded-md">4H</button>
-                <button className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md">1D</button>
-                <button className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md">1W</button>
-            </div>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-xl font-bold text-white">{currentPair}</h2>
+          <p className={`text-lg font-semibold ${currentPrice > 1.0855 ? 'text-green-400' : 'text-red-400'}`}>{currentPrice.toFixed(5)}</p>
         </div>
+        <div className="flex space-x-2">
+          <button className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md">1H</button>
+          <button className="px-3 py-1 text-sm bg-cyan-500 text-white rounded-md">4H</button>
+          <button className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md">1D</button>
+          <button className="px-3 py-1 text-sm bg-gray-700 text-white rounded-md">1W</button>
+        </div>
+      </div>
       <div ref={chartContainerRef} className="w-full h-[400px]" />
     </div>
   );
 };
 
 const MarketWatch = () => {
+    // Dane są statyczne w tym prototypie
     const pairs = [
         { name: 'EUR/USD', price: 1.0855, change: '+0.12%', trend: 'up' },
         { name: 'GBP/USD', price: 1.2710, change: '-0.05%', trend: 'down' },
@@ -231,7 +178,20 @@ const MarketWatch = () => {
     );
 };
 
-const AiInsightPanel = () => (
+const AiInsightPanel = ({ lastTick }) => {
+    // Symulacja predykcji AI na podstawie ostatniego ticku
+    const [prediction, setPrediction] = useState("Oczekiwanie na dane...");
+
+    useEffect(() => {
+        if (lastTick) {
+            // Prosta, symulowana logika: jeśli cena rośnie, sugeruj KUP, w przeciwnym razie SPRZEDAJ
+            const trend = lastTick.close > lastTick.open ? "KUP" : "SPRZEDAJ";
+            const confidence = Math.random() * (95 - 75) + 75; // Losowa pewność między 75% a 95%
+            setPrediction(`Sygnał AI: ${trend} (Pewność: ${confidence.toFixed(1)}%)`);
+        }
+    }, [lastTick]);
+
+    return (
     <div className="bg-gray-900 p-6 rounded-lg space-y-6 h-full flex flex-col">
         <h2 className="text-xl font-bold text-white flex items-center">
             <AiIcon />
@@ -243,14 +203,14 @@ const AiInsightPanel = () => (
             <div className="flex items-center space-x-3">
                 <span className="text-3xl">📈</span>
                 <div>
-                    <p className="text-white font-bold">Silny Trend Wzrostowy</p>
-                    <p className="text-sm text-gray-400">Cena przebiła kluczowy opór. EMA(20) powyżej EMA(50).</p>
+                    <p className="text-white font-bold">{prediction}</p>
+                    <p className="text-sm text-gray-400">Analiza na podstawie ostatniego ticku.</p>
                 </div>
             </div>
         </div>
 
         <div>
-            <h3 className="font-semibold text-cyan-400 mb-2">Sentyment Rynkowy</h3>
+            <h3 className="font-semibold text-cyan-400 mb-2">Sentyment Rynkowy (Symulowany)</h3>
             <div className="w-full bg-gray-700 rounded-full h-2.5">
                 <div className="bg-gradient-to-r from-green-400 to-emerald-500 h-2.5 rounded-full" style={{width: '75%'}}></div>
             </div>
@@ -276,12 +236,19 @@ const AiInsightPanel = () => (
             Generuj pełny raport
         </button>
     </div>
-);
+)};
 
 
 // --- Główny komponent aplikacji ---
 
 export default function App() {
+  const [lastTick, setLastTick] = useState(null);
+
+  // Funkcja callback, którą przekażemy do komponentu wykresu
+  const handleNewTick = (tick) => {
+    setLastTick(tick);
+  };
+
   return (
     <div className="flex h-screen bg-gray-900 font-sans">
       <Sidebar />
@@ -289,11 +256,11 @@ export default function App() {
         <Header />
         <div className="p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-2 space-y-6">
-            <TradingChart />
+            <TradingChart onNewTick={handleNewTick} />
             <MarketWatch />
           </div>
           <div className="lg:col-span-1 h-full">
-            <AiInsightPanel />
+            <AiInsightPanel lastTick={lastTick} />
           </div>
         </div>
       </main>
