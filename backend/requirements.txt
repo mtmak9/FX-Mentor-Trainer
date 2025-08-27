@@ -8,3 +8,5 @@ scikit-learn
 xgboost
 joblib
 python-dotenv
+requests
+beautifulsoup4
